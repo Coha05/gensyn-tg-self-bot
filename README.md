@@ -56,11 +56,11 @@ function escapeHtml(text) {
 }
 
 function getScreenLogs(callback) {
-  exec(`screen -S swarm -X hardcopy -h /tmp/screen-swarm.log`, (err) => { # Change it to your actual screen name, mine is swarm and swarm.log
+  exec(`screen -S swarm -X hardcopy -h /tmp/screen-swarm.log`, (err) => {
     if (err) return callback(err);
     fs.readFile('/tmp/screen-swarm.log', 'utf8', (err, data) => {
       if (err) return callback(err);
-      const lastLines = data.trim().split('\n').slice(-10).join('\n'); # Default latest 10 lines
+      const lastLines = data.trim().split('\n').slice(-10).join('\n'); 
       callback(null, escapeHtml(lastLines));
     });
   });
@@ -102,6 +102,7 @@ bot.onText(/\/check/, (msg) => {
   }
 });
 ```
+**Look your actual screen name and replace to above line 15**
 ## 7. Install PM2 globally
 ```
 npm install -g pm2
