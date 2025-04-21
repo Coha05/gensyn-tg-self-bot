@@ -48,13 +48,20 @@ const TELEGRAM_USER_ID = process.env.TELEGRAM_USER_ID;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function getScreenLogs(callback) {
-  exec(`screen -S swarm -X hardcopy -h /tmp/screen-swarm.log`, (err) => { # Replace with your actual screen name, mine is swarm
+  exec(`screen -S swarm -X hardcopy -h /tmp/screen-swarm.log`, (err) => { # Change it to your actual screen name, mine is swarm and swarm.log
     if (err) return callback(err);
     fs.readFile('/tmp/screen-swarm.log', 'utf8', (err, data) => {
       if (err) return callback(err);
-      const lastLines = data.trim().split('\n').slice(-10).join('\n'); # You can modify as how many lines you want, default is 10.
-      callback(null, lastLines);
+      const lastLines = data.trim().split('\n').slice(-10).join('\n'); # Default latest 10 lines
+      callback(null, escapeHtml(lastLines));
     });
   });
 }
@@ -74,6 +81,22 @@ cron.schedule('*/15 * * * *', () => {
 bot.onText(/\/start/, (msg) => {
   if (msg.from.id.toString() === TELEGRAM_USER_ID) {
     bot.sendMessage(msg.chat.id, `Swarm Log Bot is active. Logs will be sent every 15 minutes.`);
+  } else {
+    bot.sendMessage(msg.chat.id, `Access denied.`);
+  }
+});
+
+bot.onText(/\/check/, (msg) => {
+  if (msg.from.id.toString() === TELEGRAM_USER_ID) {
+    getScreenLogs((err, logs) => {
+      if (err) {
+        bot.sendMessage(msg.chat.id, `Error reading logs: ${err.message}`);
+      } else {
+        bot.sendMessage(msg.chat.id, `<b>Manual Check Log (Last 10 Lines):</b>\n\n<pre>${logs}</pre>`, {
+          parse_mode: 'HTML'
+        });
+      }
+    });
   } else {
     bot.sendMessage(msg.chat.id, `Access denied.`);
   }
